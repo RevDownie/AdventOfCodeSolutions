@@ -39,15 +39,15 @@ def part_one(opcodes, noun, verb):
 def part_two(opcodes):
 
 	# Pick 2 points on the line
-	r1 = part_one(as_list, 0, 0)
-	r2 = part_one(as_list, 99, 0)
+	r1 = part_one(opcodes, 0, 0)
+	r2 = part_one(opcodes, 99, 0)
 
 	# Calculate the X to find our target Y
 	m = (r2 - r1)/100
 	noun = (19690720/m) - 1
 
 	# Pop that in and see how far off we are and that gives us the y we need
-	min_verb = part_one(as_list, noun, 0)
+	min_verb = part_one(opcodes, noun, 0)
 	verb = 19690720 - min_verb
 
 	return 100 * noun + verb
