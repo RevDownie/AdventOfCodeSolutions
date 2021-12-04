@@ -46,13 +46,12 @@ fn count_increases_3window(data: []u32) u32 {
     var count: u32 = 0;
     const len = data.len - 3;
     var i: usize = 0;
-    while (i < len) {
+    while (i < len) : (i += 1) {
         const sum1 = data[i] + data[i + 1] + data[i + 2];
         const sum2 = data[i + 1] + data[i + 2] + data[i + 3];
         if (sum2 > sum1) {
             count += 1;
         }
-        i += 1;
     }
     return count;
 }

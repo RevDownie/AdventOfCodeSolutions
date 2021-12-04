@@ -33,19 +33,16 @@ fn calculate_power_consumption(input_buffer: []u8, num_entries: u32) u64 {
     var counts = [_]u32{0} ** num_bits;
 
     var i: usize = 0;
-    while (i < input_buffer.len) {
+    while (i < input_buffer.len) : (i += num_bits + 1) {
         var j: usize = 0;
-        while (j < num_bits) {
+        while (j < num_bits) : (j += 1) {
             counts[j] += input_buffer[i + j] - '0';
-            j += 1;
         }
-
-        i += num_bits + 1;
     }
 
     var k: u4 = 0;
     const threshold = num_entries / 2;
-    while (k < num_bits) {
+    while (k < num_bits) : (k += 1) {
         const idx: u6 = num_bits - k - 1;
         const one: u64 = 1;
         if (counts[k] > threshold) { //There are more 1s than 0s
@@ -53,7 +50,6 @@ fn calculate_power_consumption(input_buffer: []u8, num_entries: u32) u64 {
         } else {
             epsilon |= one << idx;
         }
-        k += 1;
     }
 
     return gamma * epsilon;

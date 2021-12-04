@@ -13,9 +13,18 @@ const required_field_hashes = [_]usize{
     //field_hash("cid"),
 };
 
+const byr_hash = required_field_hashes[0];
+const iyr_hash = required_field_hashes[1];
+const eyr_hash = required_field_hashes[2];
+const hgt_hash = required_field_hashes[3];
+const hcl_hash = required_field_hashes[4];
+const ecl_hash = required_field_hashes[5];
+const pid_hash = required_field_hashes[6];
+
 /// Advent of code - Day 4
 ///
 /// Part 1 - Parse "passport" key value format looking for missing fields and counting valid passports
+/// Part 2 - As well as checking the correct fields are present we must now also validate the data
 ///
 pub fn main() !void {
     const input_file = try fs.cwd().openFile("input.txt", .{});
@@ -25,7 +34,8 @@ pub fn main() !void {
     var input_buffer: [20 * 1024]u8 = undefined;
     const input_len = try input_file.readAll(&input_buffer);
 
-    var valid_count: usize = 0;
+    var valid_count_fields: usize = 0;
+    var valid_count_data: usize = 0;
 
     //40 is the size of the hash range
     var set: [40]bool = undefined;
@@ -33,12 +43,19 @@ pub fn main() !void {
     var i: usize = 0;
     while (i < input_len - 1) : (i += 1) {
         if (input_buffer[i] == ':') {
-            set[field_hash(input_buffer[i - 3 .. i])] = true;
+            const field = input_buffer[i - 3 .. i];
+            const hash = field_hash(field);
+            set[hash] = true;
+            const valid_data: usize = switch (hash) {
+                byr_hash => 1,
+                else => 0,
+            };
+            valid_count_data += valid_data;
         } else if (input_buffer[i] == '\n' and input_buffer[i + 1] == '\n') {
             //Blank line means new passport entry. Check if the previous one was valid - had all required fields
             const valid = validate_and_clear_fields(required_field_hashes[0..], set[0..]);
             if (valid == true) {
-                valid_count += 1;
+                valid_count_fields += 1;
             }
         }
     }
@@ -46,11 +63,11 @@ pub fn main() !void {
     //Catch the final passport
     const valid = validate_and_clear_fields(required_field_hashes[0..], set[0..]);
     if (valid == true) {
-        valid_count += 1;
+        valid_count_fields += 1;
     }
 
     const stdout = std.io.getStdOut().writer();
-    try stdout.print("Part 1: {}, Part 2: {}\n", .{ valid_count, "TODO" });
+    try stdout.print("Part 1: {}, Part 2: {}\n", .{ valid_count_fields, "TODO" });
 }
 
 /// Field sum to unique numbers in the range 304 - 340 so we can map to a smaller hash range
