@@ -15,7 +15,7 @@ pub fn main() !void {
     const input_len = try input_file.readAll(&input_buffer);
 
     const result_1 = calculate_power_consumption(input_buffer[0..input_len], 1000);
-    const result_2 = 0;
+    const result_2 = calculate_life_support_rating(input_buffer[0..input_len], 1000);
 
     const stdout = std.io.getStdOut().writer();
     try stdout.print("Part 1: {}, Part 2: {}\n", .{ result_1, result_2 });
@@ -24,11 +24,9 @@ pub fn main() !void {
 /// For each entry which is a binary number count the number of 1s in each column and build a gamma number
 /// with the most common value for each bit column. Epsilon is built from the least common and then power consumption is the multiple
 ///
-fn calculate_power_consumption(input_buffer: []u8, num_entries: u32) u64 {
-    const stdout = std.io.getStdOut().writer();
+fn calculate_power_consumption(input_buffer: []u8, num_entries: u32) u32 {
     const num_bits = 12;
-    var gamma: u64 = 0;
-    var epsilon: u64 = 0;
+    var gamma: u32 = 0;
 
     var counts = [_]u32{0} ** num_bits;
 
@@ -40,17 +38,21 @@ fn calculate_power_consumption(input_buffer: []u8, num_entries: u32) u64 {
         }
     }
 
-    var k: u4 = 0;
+    var k: u5 = 0;
     const threshold = num_entries / 2;
     while (k < num_bits) : (k += 1) {
-        const idx: u6 = num_bits - k - 1;
-        const one: u64 = 1;
         if (counts[k] > threshold) { //There are more 1s than 0s
-            gamma |= one << idx;
-        } else {
-            epsilon |= one << idx;
+            const idx: u5 = num_bits - k - 1; //Zig only allows shifting with consts or a << b where b is Log2(a)
+            gamma |= @as(u32, 1) << idx;
         }
     }
 
+    const epsilon = ~gamma & 0xFFF;
     return gamma * epsilon;
+}
+
+/// Filtering out binary numbers based on the most common/least common bit values
+///
+fn calculate_life_support_rating(input_buffer: []u8, num_entries: u32) u64 {
+    return 0;
 }
