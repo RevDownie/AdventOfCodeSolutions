@@ -1,4 +1,3 @@
 ﻿*.pdb
 *.exe
-2021/Day1/zig-cache/
-2020/Day4/zig-cache/
+**/zig-cache/
