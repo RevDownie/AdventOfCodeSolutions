@@ -5,6 +5,7 @@ const fs = std.fs;
 /// Advent of code - Day 1
 ///
 /// Part 1 - Count the number of increases from a list of numbers
+/// Part 2 - Count the number of increases by summing a sliding window of 3
 ///
 pub fn main() !void {
     const input_file = try fs.cwd().openFile("input.txt", .{});
