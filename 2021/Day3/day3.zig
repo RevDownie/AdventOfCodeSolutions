@@ -15,11 +15,14 @@ pub fn main() !void {
     var input_buffer: [1024 * 13]u8 = undefined;
     const input_len = try input_file.readAll(&input_buffer);
 
+    const stdout = std.io.getStdOut().writer();
+    const timer = std.time.Timer;
+
+    const t = try timer.start();
     const result_1 = calculate_power_consumption(input_buffer[0..input_len], 1000);
     const result_2 = calculate_life_support_rating(input_buffer[0..input_len], 1000);
 
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("Part 1: {}, Part 2: {}\n", .{ result_1, result_2 });
+    try stdout.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
 /// For each entry which is a binary number count the number of 1s in each column and build a gamma number

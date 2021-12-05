@@ -23,11 +23,14 @@ pub fn main() !void {
         line_idx += 1;
     }
 
+    const stdout = std.io.getStdOut().writer();
+    const timer = std.time.Timer;
+
+    const t = try timer.start();
     const result_1 = count_increases_single(values_buffer[0..line_idx]);
     const result_2 = count_increases_3window(values_buffer[0..line_idx]);
 
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("Part 1: {}, Part 2: {}\n", .{ result_1, result_2 });
+    try stdout.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
 fn count_increases_single(data: []u32) u32 {
