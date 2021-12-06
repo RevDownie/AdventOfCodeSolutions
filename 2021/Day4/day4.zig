@@ -2,9 +2,20 @@ const std = @import("std");
 const io = std.io;
 const fs = std.fs;
 
+const ValIndex = struct {
+    val: u32,
+    idx: usize,
+};
+
+const win_eval_fn = fn (max_turns: []u32) ValIndex;
+const num_boards = 100;
+const board_dims = 5;
+const board_area = board_dims * board_dims;
+
 /// Advent of code - Day 4
 ///
 /// Part 1 - Bingo (rows and cols)
+/// Part 2 - As part one but the board that is last to win rather than first
 ///
 pub fn main() !void {
     const input_file = try fs.cwd().openFile("input.txt", .{});
@@ -18,8 +29,8 @@ pub fn main() !void {
     const timer = std.time.Timer;
 
     const t = try timer.start();
-    const result_1 = bingo(input_buffer[0..input_len], 100);
-    const result_2 = 0;
+    const result_1 = bingo(input_buffer[0..input_len], win_first);
+    const result_2 = bingo(input_buffer[0..input_len], win_last_by_board);
 
     try stdout.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
@@ -29,12 +40,9 @@ pub fn main() !void {
 /// The min order number from all those maxes tells us the row or col which completed first and ultimately the turn on which it won
 /// we can then iterate the boards again and sum the "unmarked" which are any numbers called after the winning turn
 ///
-fn bingo(input_buffer: []u8, num_boards: u32) !u32 {
-    const stdout = std.io.getStdOut().writer();
+fn bingo(input_buffer: []u8, winning_turn_fn: win_eval_fn) !u32 {
     const allocator = std.heap.page_allocator;
 
-    const board_dims = 5;
-    const board_area = board_dims * board_dims;
     var called_numbers: [100]u32 = undefined;
     var called_num_to_turn = [_]u32{0xFFFFFFFF} ** 100;
 
@@ -92,16 +100,17 @@ fn bingo(input_buffer: []u8, num_boards: u32) !u32 {
         }
     }
 
-    const winning_turn_idx = min_index(max_turns[0..]);
-    const winning_turn = max_turns[winning_turn_idx];
-    const winning_board = if (winning_turn_idx < col_buf_offset) winning_turn_idx / board_dims else (winning_turn_idx - col_buf_offset) / board_dims;
+    const winning_turn = winning_turn_fn(max_turns[0..]);
+    const winning_board = if (winning_turn.idx < col_buf_offset) winning_turn.idx / board_dims else (winning_turn.idx - col_buf_offset) / board_dims;
     const board_offset = winning_board * board_area;
-    const called_number = called_numbers[winning_turn];
-    const uncalled_total = sum_uncalled(boards[board_offset .. board_offset + board_area], called_num_to_turn[0..], winning_turn);
+    const called_number = called_numbers[winning_turn.val];
+    const uncalled_total = sum_uncalled(boards[board_offset .. board_offset + board_area], called_num_to_turn[0..], winning_turn.val);
 
     return called_number * uncalled_total;
 }
 
+/// Sum all values that were called after the winning turn
+///
 fn sum_uncalled(boards: []u32, called_num_to_turn: []u32, max_turn: u32) u32 {
     var sum: u32 = 0;
     for (boards) |n| {
@@ -112,7 +121,9 @@ fn sum_uncalled(boards: []u32, called_num_to_turn: []u32, max_turn: u32) u32 {
     return sum;
 }
 
-fn min_index(vals: []u32) usize {
+/// First row or col to complete wins for that board
+///
+fn win_first(vals: []u32) ValIndex {
     var min: u32 = 0xFFFFFFFF;
     var minIdx: usize = 0;
     for (vals) |v, i| {
@@ -122,5 +133,30 @@ fn min_index(vals: []u32) usize {
         }
     }
 
-    return minIdx;
+    return ValIndex{ .val = min, .idx = minIdx };
+}
+
+/// Last board to complete wins
+///
+fn win_last_by_board(max_turns: []u32) ValIndex {
+    //Find the min or col or row for each board and then find the max
+    var min_by_board: [num_boards]ValIndex = undefined;
+    for (min_by_board) |m, i| {
+        const row_offset = i * board_dims;
+        var row = win_first(max_turns[row_offset .. row_offset + board_dims]);
+        row.idx += row_offset;
+        const col_offset = row_offset + (max_turns.len / 2);
+        var col = win_first(max_turns[col_offset .. col_offset + board_dims]);
+        col.idx += col_offset;
+        min_by_board[i] = if (row.val < col.val) row else col;
+    }
+
+    var max = ValIndex{ .val = 0, .idx = 0 };
+    for (min_by_board) |m| {
+        if (m.val >= max.val) {
+            max = m;
+        }
+    }
+
+    return max;
 }
