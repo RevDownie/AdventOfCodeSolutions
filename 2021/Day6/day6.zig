@@ -2,9 +2,6 @@ const std = @import("std");
 const io = std.io;
 const fs = std.fs;
 
-const grid_dims: u32 = 1000;
-const grid_area: u32 = grid_dims * grid_dims;
-
 /// Advent of code - Day 6
 ///
 /// Part 1 - Lanternfish - each number ticks down when it reaches 0 it resets to 6 and spawns and 8 - count number after 80 ticks
