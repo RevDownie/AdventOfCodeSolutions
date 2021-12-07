@@ -28,8 +28,6 @@ pub fn main() !void {
 }
 
 fn count_overlaps_cardinal_pipes(comptime include_diags: bool, input_buffer: []u8) !usize {
-    const stdout = std.io.getStdOut().writer();
-
     //Track first and second hits as we need to identify any with 2 or more intersections
     var grid_hit_1 = std.StaticBitSet(grid_area).initEmpty();
     var grid_hit_2 = std.StaticBitSet(grid_area).initEmpty();
