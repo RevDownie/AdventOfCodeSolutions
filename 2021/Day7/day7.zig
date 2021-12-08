@@ -5,6 +5,7 @@ const fs = std.fs;
 /// Advent of code - Day 7
 ///
 /// Part 1 - Find the shortest distance to move each number so that they are all the same
+/// Part 2 - Same as part 1 but each move costs one more than the last
 ///
 pub fn main() !void {
     const input_file = try fs.cwd().openFile("input.txt", .{});
