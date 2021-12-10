@@ -23,7 +23,7 @@ pub fn main() !void {
     try stdout.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
-fn count_uniquely_segmented_digits_in_output(input_buffer: []u8) !u32 {
+fn count_uniquely_segmented_digits_in_output(input_buffer: []u8) u32 {
     var total: u32 = 0;
     var i: usize = 0;
     full_loop: while (true) { //Loop over the full input
