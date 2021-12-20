@@ -23,9 +23,8 @@ pub fn main() !void {
     //Parse the crab horizontal positions
     var vals_it = std.mem.split(input_buffer[0..input_len], ",");
     var vals = std.ArrayList(u32).init(std.heap.page_allocator);
-    defer {
-        vals.deinit();
-    }
+    defer vals.deinit();
+
     while (vals_it.next()) |v| {
         try vals.append(try std.fmt.parseUnsigned(u32, v, 10));
     }
