@@ -5,9 +5,12 @@ const fs = std.fs;
 const grid_width: u32 = 10;
 const grid_area = grid_width * grid_width;
 
+const SimulationResult = struct { num_flashes: u32, full_flash_tick: u32 };
+
 /// Advent of code - Day 11
 ///
 /// Part 1 - Run 100 simulations ticking the timer on each cell, when it reaches 10 it flashes and resets, flashes cause adjacent cells to increase
+/// Part 2 - Run until all flash and then return the tick that occurred on
 ///
 pub fn main() !void {
     const input_file = try fs.cwd().openFile("input.txt", .{});
@@ -23,8 +26,9 @@ pub fn main() !void {
 
     var grid = create_grid(input_buffer[0..input_len]);
 
-    const result_1 = simulate_ticks(100, &grid);
-    const result_2 = 0;
+    const result = simulate_ticks(&grid);
+    const result_1 = result.num_flashes;
+    const result_2 = result.full_flash_tick;
     try stdout.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
@@ -43,13 +47,15 @@ fn create_grid(input_buffer: []u8) [grid_area]u8 {
     return grid;
 }
 
-/// Tick and count the number of flashes
+/// Tick and count the number of flashes up until we reach 100 ticks, stopping when they all flash
+/// Assumes that the "all flash" happens after 100 ticks
 ///
-fn simulate_ticks(num_ticks: u32, energies: *[grid_area]u8) u32 {
+fn simulate_ticks(energies: *[grid_area]u8) SimulationResult {
     var num_flashes: u32 = 0;
+    var full_flash_tick: u32 = undefined;
 
-    var tick: u32 = 0;
-    while (tick < num_ticks) : (tick += 1) {
+    var tick: u32 = 1;
+    while (true) : (tick += 1) {
         var to_flash: [grid_area]usize = undefined;
         var to_flash_head: usize = 0;
         var has_flashed = std.StaticBitSet(grid_area).initEmpty();
@@ -72,7 +78,7 @@ fn simulate_ticks(num_ticks: u32, energies: *[grid_area]u8) u32 {
             const adjacent_idxs = calculate_adjacent_indices(i);
             for (adjacent_idxs) |ai| {
                 if (ai >= grid_area) {
-                    continue;
+                    continue; //Out of bounds
                 }
 
                 energies[ai] += 1;
@@ -84,16 +90,24 @@ fn simulate_ticks(num_ticks: u32, energies: *[grid_area]u8) u32 {
             }
         }
 
+        //Keep going until we get the full flash
+        if (has_flashed.count() == grid_area) {
+            full_flash_tick = tick;
+            break;
+        }
+
         //Reset any that flashed
         for (energies) |*energy| {
             if (energy.* > 9) {
                 energy.* = 0;
-                num_flashes += 1;
+                if (tick <= 100) {
+                    num_flashes += 1;
+                }
             }
         }
     }
 
-    return num_flashes;
+    return SimulationResult{ .num_flashes = num_flashes, .full_flash_tick = full_flash_tick };
 }
 
 fn calculate_adjacent_indices(i: usize) [8]usize {
