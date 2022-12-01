@@ -46,7 +46,6 @@ fn findTop3MostCalories(data: []const u8) ![3]u32 {
                 if (lowest_greatest >= v) {
                     lowest_greatest = v;
                     lowest_greatest_idx = idx;
-                    std.debug.print("Replacing {}\n", .{idx});
                 }
             }
 
