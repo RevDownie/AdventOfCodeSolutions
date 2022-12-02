@@ -62,24 +62,13 @@ fn determineResult(them: u8, us: u8) u8 {
         return 'Y';
     }
 
-    //Rock beats scissors
-    if (us == 'A' and them == 'C') {
+    const n = (them - 'A' + 1) % 3;
+    if (n == (us - 'A')) {
         //Win
         return 'Z';
     }
 
-    //Paper beats rock
-    if (us == 'B' and them == 'A') {
-        //Win
-        return 'Z';
-    }
-
-    //Scissors beats paper
-    if (us == 'C' and them == 'B') {
-        //Win
-        return 'Z';
-    }
-
+    //Else Loss
     return 'X';
 }
 
