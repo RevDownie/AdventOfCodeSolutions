@@ -1,6 +1,4 @@
 const std = @import("std");
-const io = std.io;
-const fs = std.fs;
 
 const input_file = @embedFile("input.txt");
 
@@ -57,6 +55,7 @@ fn findTop3MostCalories(data: []const u8) ![3]u32 {
     }
 
     //Sort so that 0 is the highest
+    //TODO: Change so we keep a running sorted list
     std.sort.sort(u32, max_elf_total[0..], {}, comptime std.sort.desc(u32));
     return max_elf_total;
 }
