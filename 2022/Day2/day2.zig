@@ -25,10 +25,9 @@ fn calculateScoreTwoHands(data: []const u8) !u32 {
     var i: usize = 0;
     while (i < data.len) {
         const them = data[i];
-        const us = data[i + 2] - 23;
+        const us = data[i + 2] - 23; //Difference betwen X and A to convert XYZ to ABC
         const result = determineResult(them, us);
-        total_score += getResultScore(result);
-        total_score += getHandScore(us);
+        total_score += getResultScore(result) + getHandScore(us);
 
         i += 4; //Skip new line
     }
@@ -47,9 +46,7 @@ fn calculateScoreHandAndResult(data: []const u8) !u32 {
         const them = data[i];
         const result = data[i + 2];
         const us = determineHandToAchieveResult(them, result);
-        std.debug.print("T: {}, U: {}, R: {}\n", .{them, us, result});
-        total_score += getResultScore(result);
-        total_score += getHandScore(us);
+        total_score += getResultScore(result) + getHandScore(us);
 
         i += 4; //Skip new line
     }
@@ -113,6 +110,6 @@ fn determineHandToAchieveResult(them: u8, result: u8) u8 {
         return them;
     }
 
-    //Win equation =+ wrap A => B, B => C, C => A
+    //Win equation = +1 wrap A => B, B => C, C => A
     return 'A' + ((them - 'A' + 1) % 3);
 }
