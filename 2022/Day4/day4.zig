@@ -4,8 +4,8 @@ const input_file = @embedFile("input.txt");
 
 /// Advent of code - Day 4
 ///
-/// Part 1 - In each pai find if one of the pair's ranges entirely consumes the other
-/// Part 2 - ???
+/// Part 1 - In each pair find if one of the pair's ranges entirely consumes the other
+/// Part 2 - In each pair find if any of the range overlaps
 ///
 pub fn main() !void {
     const timer = std.time.Timer;
@@ -16,7 +16,7 @@ pub fn main() !void {
     std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
-/// Find the full overlaps for each pair e.g. 1-6 includes the range 2-4
+/// Find the overlaps for each pair e.g. 1-6 includes the range 2-4
 /// Format is 2-4,6-8 with a new pair on each line. Ranges are inclusive
 ///
 fn calcOverlaps(data: []const u8, overlap_check_fn: *const fn (a: u32, b: u32, x: u32, y: u32) bool) !usize {
