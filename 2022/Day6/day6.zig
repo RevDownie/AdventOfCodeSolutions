@@ -28,17 +28,18 @@ fn findStartOfPacketMarker(data: []const u8, comptime window_size: usize) usize 
     var i: usize = 0;
     while (i < data.len) : (i += 1) {
         const window = data[i..(i + window_size)];
-        var window_set = [_]u8{255} ** 26; //Stored in a array rather than a bit set as we need to store the index to reduce the comparisons
+        var window_set = std.StaticBitSet(26).initEmpty();
         var dupe_found = false;
-        for (window) |c, j| {
-            const char_idx = c - 'a';
-            num_checks += 1;
-            if (window_set[char_idx] != 255) {
+        var j: isize = window_size - 1;
+        while (j >= 0) : (j -= 1) {
+            const ju = @intCast(usize, j);
+            const char_idx = window[ju] - 'a';
+            if (window_set.isSet(char_idx)) {
                 dupe_found = true;
-                i = i + window_set[char_idx]; //Skip over known duplicates
+                i = i + ju; //Skip over known duplicates
                 break;
             }
-            window_set[char_idx] = @intCast(u8, j);
+            window_set.set(char_idx);
         }
 
         if (dupe_found == false) {
