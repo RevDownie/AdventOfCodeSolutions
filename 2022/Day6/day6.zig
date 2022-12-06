@@ -21,19 +21,24 @@ pub fn main() !void {
 /// and return the index+1 of the last character in the sequence
 /// data is all lowercase letters
 ///
+/// We don't slide the window by 1 each time as if we find a duplicate there is no point checking the rest of the window that contains
+/// that dupe e.g. ABCC there is no point in check BCCD or CCDE we just slide the window to check CDEF
+///
 fn findStartOfPacketMarker(data: []const u8, comptime window_size: usize) usize {
     var i: usize = 0;
     while (i < data.len) : (i += 1) {
         const window = data[i..(i + window_size)];
-        var window_set = std.StaticBitSet(26).initEmpty();
+        var window_set = [_]u8{255} ** 26; //Stored in a array rather than a bit set as we need to store the index to reduce the comparisons
         var dupe_found = false;
-        for (window) |c| {
+        for (window) |c, j| {
             const char_idx = c - 'a';
-            if (window_set.isSet(char_idx) == true) {
+            num_checks += 1;
+            if (window_set[char_idx] != 255) {
                 dupe_found = true;
+                i = i + window_set[char_idx]; //Skip over known duplicates
                 break;
             }
-            window_set.set(char_idx);
+            window_set[char_idx] = @intCast(u8, j);
         }
 
         if (dupe_found == false) {
