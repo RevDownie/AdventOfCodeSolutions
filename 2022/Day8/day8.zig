@@ -7,14 +7,14 @@ const GRID_DIMS = 99;
 /// Advent of code - Day 8
 ///
 /// Part 1 - Find all the trees that are visible from outside the grid
-/// Part 2 - ???
+/// Part 2 - Fiind the tree that can see furthest in cardinal directions
 ///
 pub fn main() !void {
     const timer = std.time.Timer;
     var t = try timer.start();
 
     const result_1 = findVisibleTrees(input_file[0..]);
-    const result_2 = 0;
+    const result_2 = findTreeWithBestView(input_file[0..]);
 
     std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
@@ -98,5 +98,67 @@ fn findVisibleTrees(data: []const u8) usize {
         }
     }
 
+
+    //TODO: Should really skip the perimeter in the search and add it on at the end GRID_DIMS * 4 - 4
     return visible_set.count();
 }
+
+/// Find the tree with the best view - can see the furthest unimpeded in each direction
+///
+fn findTreeWithBestView(data: []const u8) isize {
+    var scenic_scores = [_]isize{1} ** (GRID_DIMS * GRID_DIMS);
+
+    var y: isize = 1;
+    while (y < GRID_DIMS - 1) : (y += 1) {
+        var x: isize = 1;
+        while (x < GRID_DIMS - 1) : (x += 1) {
+            const idx_curr = @intCast(usize, y * (GRID_DIMS + 1) + x);
+            const height_curr = data[idx_curr];
+
+            //Right
+            var xr = x;
+            while (xr < GRID_DIMS - 1) {
+                xr += 1;
+                const idx_check = @intCast(usize, y * (GRID_DIMS + 1) + xr);
+                if (data[idx_check] >= height_curr) {
+                    break;
+                }
+            }
+            scenic_scores[idx_curr] *= (xr - x);
+
+            //Left
+            var xl = x - 1;
+            while (xl > 0) : (xl -= 1) {
+                const idx_check = @intCast(usize, y * (GRID_DIMS + 1) + xl);
+                if (data[idx_check] >= height_curr) {
+                    break;
+                }
+            }
+            scenic_scores[idx_curr] *= (x - xl);
+
+            //Up
+            var yu = y - 1;
+            while (yu > 0) : (yu -= 1) {
+                const idx_check = @intCast(usize, yu * (GRID_DIMS + 1) + x);
+                if (data[idx_check] >= height_curr) {
+                    break;
+                }
+            }
+            scenic_scores[idx_curr] *= (y - yu);
+
+            //Down
+            var yd = y;
+            while (yd < GRID_DIMS - 1) {
+                yd += 1;
+                const idx_check = @intCast(usize, yd * (GRID_DIMS + 1) + x);
+                if (data[idx_check] >= height_curr) {
+                    break;
+                }
+            }
+            scenic_scores[idx_curr] *= (yd - y);
+        }
+    }
+
+    return std.mem.max(isize, scenic_scores[0..]);
+}
+
