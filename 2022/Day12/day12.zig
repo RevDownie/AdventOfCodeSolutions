@@ -19,6 +19,7 @@ pub fn main() !void {
 
     const result_1 = try findShortestPath(input_file[0..], gpa.allocator());
     const result_2 = 0;
+    const result_1 = try findShortestPath(input_file[0..], gpa.allocator(), 'S', 'E');
 
     std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
@@ -28,7 +29,7 @@ pub fn main() !void {
 ///
 /// Djikstra's Algorithm but without any weightings
 ///
-fn findShortestPath(data: []const u8, allocator: std.mem.Allocator) !u32 {
+fn findShortestPath(data: []const u8, allocator: std.mem.Allocator, comptime start_symbol: u8, comptime end_symbol:u8) !u32 {
     var altitudes: [GRID_WIDTH * GRID_HEIGHT]u8 = undefined;
     var distances = [_]u32{std.math.maxInt(u32)} ** (GRID_WIDTH * GRID_HEIGHT);
     var next_node_queue = std.PriorityQueue(u16, []u32, shortestDistComparator).init(allocator, distances[0..]);
@@ -41,10 +42,10 @@ fn findShortestPath(data: []const u8, allocator: std.mem.Allocator) !u32 {
     var grid_idx = i;
     while (i < data.len) : (i += 1) {
         switch (data[i]) {
-            'S' => {
+            start_symbol => {
                 start_idx = grid_idx;
             },
-            'E' => {
+            end_symbol => {
                 end_idx = grid_idx;
             },
             '\n' => {
