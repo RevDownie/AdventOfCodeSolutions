@@ -2,6 +2,8 @@ const std = @import("std");
 
 const input_file = @embedFile("input.txt");
 
+const ValidMoveFn = fn (u16, u16) bool;
+
 const GRID_WIDTH = 154;
 const GRID_HEIGHT = 41;
 
@@ -17,21 +19,20 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
 
-    const result_1 = try findShortestPath(input_file[0..], gpa.allocator());
-    const result_2 = 0;
-    const result_1 = try findShortestPath(input_file[0..], gpa.allocator(), 'S', 'E');
+    const result_1 = try findShortestPath(input_file[0..], gpa.allocator(), 'S', 'E', 'z', validMoveForwards);
+    const result_2 = try findShortestPath(input_file[0..], gpa.allocator(), 'E', 'S', 'a', validMoveBackwards);
 
     std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
-/// Each cell in the grid has an altitude denoted a(low) to z(high) we need to find the shortest path from S to E that doesn't take more than one
+/// Part 1: Each cell in the grid has an altitude denoted a(low) to z(high) we need to find the shortest path from S to E that doesn't take more than one
 /// increase in altitude between each step
 ///
-/// Part 2 wants us to find the shortest path from E to any 'a' altitude so we just pathfind in reverse from E
+/// Part 2 wants us to find the shortest path from E to any 'a' altitude so we just pathfind in reverse from E until we reach an 'a'
 ///
 /// Djikstra's Algorithm but without any weightings
 ///
-fn findShortestPath(data: []const u8, allocator: std.mem.Allocator, comptime start_symbol: u8, comptime end_symbol:u8) !u32 {
+fn findShortestPath(data: []const u8, allocator: std.mem.Allocator, comptime start_symbol: u8, comptime end_symbol: u8, comptime end_altitude: u8, comptime validMoveFn: ValidMoveFn) !u32 {
     var altitudes: [GRID_WIDTH * GRID_HEIGHT]u8 = undefined;
     var distances = [_]u32{std.math.maxInt(u32)} ** (GRID_WIDTH * GRID_HEIGHT);
     var next_node_queue = std.PriorityQueue(u16, []u32, shortestDistComparator).init(allocator, distances[0..]);
@@ -63,12 +64,12 @@ fn findShortestPath(data: []const u8, allocator: std.mem.Allocator, comptime sta
 
     distances[start_idx] = 0;
     altitudes[start_idx] = 'a';
-    altitudes[end_idx] = 'z';
+    altitudes[end_idx] = end_altitude;
     try next_node_queue.add(start_idx);
     var visited = std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT).initEmpty();
 
     //Djikstra's algorithm
-    outer: while (next_node_queue.removeOrNull()) |node_idx| {
+    while (next_node_queue.removeOrNull()) |node_idx| {
         //Discard if already seen
         if (visited.isSet(node_idx)) {
             continue;
@@ -84,15 +85,14 @@ fn findShortestPath(data: []const u8, allocator: std.mem.Allocator, comptime sta
             if (u_sig >= 0 and u_sig < distances.len) {
                 const u = @intCast(u16, u_sig);
                 if (visited.isSet(u) == false) {
-                    const valid_move = (@intCast(i8, altitudes[u]) - @intCast(i8, altitudes[node_idx])) <= 1;
-                    if (valid_move) {
+                    if (validMoveFn(altitudes[node_idx], altitudes[u])) {
                         const dist_to_u = distances[node_idx] + 1;
                         if (dist_to_u < distances[u]) {
                             distances[u] = dist_to_u;
 
                             //Reached destination - don't need to wait for the node to actually be visited
-                            if (u == end_idx) {
-                                break :outer;
+                            if (altitudes[u] == end_altitude) {
+                                return distances[u];
                             }
                         }
                         try next_node_queue.add(u);
@@ -102,7 +102,7 @@ fn findShortestPath(data: []const u8, allocator: std.mem.Allocator, comptime sta
         }
     }
 
-    return distances[end_idx];
+    unreachable;
 }
 
 /// Return the ordinal with the shortest distance
@@ -115,4 +115,16 @@ fn shortestDistComparator(distances: []u32, a: u16, b: u16) std.math.Order {
     } else {
         return std.math.Order.eq;
     }
+}
+
+/// Allow an up step of only one unit. For use when going uphill
+///
+fn validMoveForwards(v: u16, u: u16) bool {
+    return (@intCast(i8, u) - @intCast(i8, v)) <= 1;
+}
+
+/// Allow an down step of only one unit. For use when going downhill
+///
+fn validMoveBackwards(v: u16, u: u16) bool {
+    return (@intCast(i8, v) - @intCast(i8, u)) <= 1;
 }
