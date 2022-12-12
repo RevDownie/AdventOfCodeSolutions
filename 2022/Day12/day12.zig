@@ -8,7 +8,7 @@ const GRID_HEIGHT = 41;
 /// Advent of code - Day 12
 ///
 /// Part 1 - Find the shortest path from S to E that doesn't go up more than one step in elevation
-/// Part 2 - ???
+/// Part 2 - Find the shortest path from any 'a' to E
 ///
 pub fn main() !void {
     const timer = std.time.Timer;
@@ -26,6 +26,8 @@ pub fn main() !void {
 
 /// Each cell in the grid has an altitude denoted a(low) to z(high) we need to find the shortest path from S to E that doesn't take more than one
 /// increase in altitude between each step
+///
+/// Part 2 wants us to find the shortest path from E to any 'a' altitude so we just pathfind in reverse from E
 ///
 /// Djikstra's Algorithm but without any weightings
 ///
@@ -100,22 +102,11 @@ fn findShortestPath(data: []const u8, allocator: std.mem.Allocator, comptime sta
         }
     }
 
-    // std.debug.print("End: {}\n\n", .{end_idx});
-    // for (distances) |d, j| {
-    //     if (j > 0 and j % (GRID_WIDTH) == 0) {
-    //         std.debug.print("\n", .{});
-    //     }
-    //     if (d < 10) {
-    //         std.debug.print("_{} ", .{d});
-    //     } else if (d < std.math.maxInt(u32)) {
-    //         std.debug.print("{} ", .{d});
-    //     } else {
-    //         std.debug.print("## ", .{});
-    //     }
-    // }
     return distances[end_idx];
 }
 
+/// Return the ordinal with the shortest distance
+///
 fn shortestDistComparator(distances: []u32, a: u16, b: u16) std.math.Order {
     if (distances[a] < distances[b]) {
         return std.math.Order.lt;
