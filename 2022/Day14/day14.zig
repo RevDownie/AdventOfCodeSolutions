@@ -107,7 +107,7 @@ fn buildStartingGrid(data: []const u8, highest_y: *u32) !std.StaticBitSet(GRID_W
 ///
 /// Rather than calculating the full path each time we store the path in a stack and pick up where the other one left of
 ///
-fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i32) u32 {
+fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: u32) u32 {
     var stack: [1000]u32 = undefined;
     var stack_head: u32 = 1;
     stack[0] = @intCast(u32, 0 * GRID_WIDTH + start_x);
@@ -118,8 +118,8 @@ fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i3
     while (true) : (n += 1) {
         stack_head -= 1;
         const prev_idx = stack[stack_head];
-        var y: i32 = @intCast(i32, prev_idx / GRID_WIDTH);
-        var x: i32 = @intCast(i32, prev_idx % GRID_WIDTH);
+        var y = prev_idx / GRID_WIDTH;
+        var x = prev_idx % GRID_WIDTH;
 
         while (true) {
             //Try down first
@@ -127,7 +127,7 @@ fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i3
             if (y_down >= GRID_HEIGHT) {
                 return ticks;
             }
-            const idx_down = @intCast(u32, y_down * GRID_WIDTH + x);
+            const idx_down = y_down * GRID_WIDTH + x;
             if (grid.isSet(idx_down) == false) {
                 y = y_down;
                 stack_head += 1;
@@ -137,7 +137,7 @@ fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i3
 
             //Next try down and to the left
             const x_left = x - 1;
-            const idx_downleft = @intCast(u32, y_down * GRID_WIDTH + x_left);
+            const idx_downleft = y_down * GRID_WIDTH + x_left;
             if (grid.isSet(idx_downleft) == false) {
                 y = y_down;
                 x = x_left;
@@ -148,7 +148,7 @@ fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i3
 
             //Next try down and to the right
             const x_right = x + 1;
-            const idx_downright = @intCast(u32, y_down * GRID_WIDTH + x_right);
+            const idx_downright = y_down * GRID_WIDTH + x_right;
             if (grid.isSet(idx_downright) == false) {
                 y = y_down;
                 x = x_right;
@@ -158,7 +158,7 @@ fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i3
             }
 
             //Nowhere else to go - just come to rest and start the next deposit
-            const idx = @intCast(u32, y * GRID_WIDTH + x);
+            const idx = y * GRID_WIDTH + x;
             grid.set(idx);
             ticks += 1;
 
