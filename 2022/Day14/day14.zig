@@ -137,9 +137,6 @@ fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i3
 
             //Next try down and to the left
             const x_left = x - 1;
-            if (x_left < 0) {
-                return ticks;
-            }
             const idx_downleft = @intCast(u32, y_down * GRID_WIDTH + x_left);
             if (grid.isSet(idx_downleft) == false) {
                 y = y_down;
@@ -151,9 +148,6 @@ fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i3
 
             //Next try down and to the right
             const x_right = x + 1;
-            if (x_right >= GRID_WIDTH) {
-                return ticks;
-            }
             const idx_downright = @intCast(u32, y_down * GRID_WIDTH + x_right);
             if (grid.isSet(idx_downright) == false) {
                 y = y_down;
