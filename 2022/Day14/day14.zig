@@ -2,9 +2,10 @@ const std = @import("std");
 
 const input_file = @embedFile("input.txt");
 
-const GRID_WIDTH = 500; //1000;
+//I really should calculate these based on the amount of fall off room required but just hard coding them based on the input data
+const GRID_WIDTH = 500;
 const GRID_HEIGHT = 180;
-const GRID_WIDTH_OFFSET = 250; //490; //All coords are up around ~500 so wastes alot of space in the array - this just slides it forward
+const GRID_WIDTH_OFFSET = 300; //All coords are up around ~500 so wastes alot of space in the array - this just slides it forward
 
 /// Advent of code - Day 14
 ///
@@ -17,15 +18,15 @@ pub fn main() !void {
 
     var highest_y: u32 = 0;
     var grid_1 = try buildStartingGrid(input_file[0..], &highest_y);
-    const result_1 = sandSimulation(grid_1[0..]);
+    const result_1 = sandSimulation(&grid_1, 500 - GRID_WIDTH_OFFSET);
 
     var grid_2 = try buildStartingGrid(input_file[0..], &highest_y);
     //Add floor
     var x: u32 = 0;
     while (x < GRID_WIDTH) : (x += 1) {
-        grid_2[(highest_y + 2) * GRID_WIDTH + x] = '#';
+        grid_2.set((highest_y + 2) * GRID_WIDTH + x);
     }
-    const result_2 = sandSimulation(grid_2[0..]);
+    const result_2 = sandSimulation(&grid_2, 500 - GRID_WIDTH_OFFSET);
 
     std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
@@ -33,8 +34,8 @@ pub fn main() !void {
 /// Parse the input of straight line segments and fill them in as rock in the grid
 /// Path is formatted as 498,4 -> 498,6 -> 496,6
 ///
-fn buildStartingGrid(data: []const u8, highest_y: *u32) ![GRID_WIDTH * GRID_HEIGHT]u8 {
-    var grid = [_]u8{'.'} ** (GRID_WIDTH * GRID_HEIGHT);
+fn buildStartingGrid(data: []const u8, highest_y: *u32) !std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT) {
+    var grid = std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT).initEmpty();
 
     var line_it = std.mem.tokenize(u8, data, "\n");
     while (line_it.next()) |line| {
@@ -74,7 +75,7 @@ fn buildStartingGrid(data: []const u8, highest_y: *u32) ![GRID_WIDTH * GRID_HEIG
                     var xmax = std.math.max(last_x, x);
                     while (xmin <= xmax) : (xmin += 1) {
                         const idx = (y * GRID_WIDTH + xmin) - GRID_WIDTH_OFFSET;
-                        grid[idx] = '#';
+                        grid.set(idx);
                     }
                 } else {
                     //Fill y
@@ -82,7 +83,7 @@ fn buildStartingGrid(data: []const u8, highest_y: *u32) ![GRID_WIDTH * GRID_HEIG
                     var ymax = std.math.max(last_y, y);
                     while (ymin <= ymax) : (ymin += 1) {
                         const idx = (ymin * GRID_WIDTH + x) - GRID_WIDTH_OFFSET;
-                        grid[idx] = '#';
+                        grid.set(idx);
                     }
                 }
             }
@@ -103,13 +104,13 @@ fn buildStartingGrid(data: []const u8, highest_y: *u32) ![GRID_WIDTH * GRID_HEIG
 ///    2. blocked the 500,0 opening
 /// and return the number of deposits to get to those states
 ///
-fn sandSimulation(grid: []u8) u32 {
+fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i32) u32 {
     var ticks: u32 = 0;
 
     var n: u32 = 0;
     while (true) : (n += 1) {
         var y: i32 = 0;
-        var x: i32 = 500 - GRID_WIDTH_OFFSET;
+        var x: i32 = start_x;
         while (true) {
             //Try down first
             const y_down = y + 1;
@@ -117,7 +118,7 @@ fn sandSimulation(grid: []u8) u32 {
                 return ticks;
             }
             const idx_down = @intCast(u32, y_down * GRID_WIDTH + x);
-            if (grid[idx_down] == '.') {
+            if (grid.isSet(idx_down) == false) {
                 y = y_down;
                 continue;
             }
@@ -128,7 +129,7 @@ fn sandSimulation(grid: []u8) u32 {
                 return ticks;
             }
             const idx_downleft = @intCast(u32, y_down * GRID_WIDTH + x_left);
-            if (grid[idx_downleft] == '.') {
+            if (grid.isSet(idx_downleft) == false) {
                 y = y_down;
                 x = x_left;
                 continue;
@@ -140,7 +141,7 @@ fn sandSimulation(grid: []u8) u32 {
                 return ticks;
             }
             const idx_downright = @intCast(u32, y_down * GRID_WIDTH + x_right);
-            if (grid[idx_downright] == '.') {
+            if (grid.isSet(idx_downright) == false) {
                 y = y_down;
                 x = x_right;
                 continue;
@@ -148,10 +149,10 @@ fn sandSimulation(grid: []u8) u32 {
 
             //Nowhere else to go - just come to rest and start the next deposit
             const idx = @intCast(u32, y * GRID_WIDTH + x);
-            grid[idx] = 'O';
+            grid.set(idx);
             ticks += 1;
 
-            if (x == 500 - GRID_WIDTH_OFFSET and y == 0) {
+            if (x == start_x and y == 0) {
                 //Blocked the opening
                 return ticks;
             }
