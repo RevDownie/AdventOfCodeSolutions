@@ -13,9 +13,6 @@ const DROP_X = 500 - GRID_WIDTH_OFFSET;
 /// Part 1 - Plot the rocks on a grid and then particle deposition sand until no more come to rest
 /// Part 2 - Add a floor and perform the particle deposition until the sand blocks the opening
 ///
-/// TODO: Potential optmisation
-/// Store the path of the falling sand (a stack) so we don't have to recalculate for each new particle.
-///
 pub fn main() !void {
     const timer = std.time.Timer;
     var t = try timer.start();
@@ -108,13 +105,22 @@ fn buildStartingGrid(data: []const u8, highest_y: *u32) !std.StaticBitSet(GRID_W
 ///    2. blocked the 500,0 opening
 /// and return the number of deposits to get to those states
 ///
+/// Rather than calculating the full path each time we store the path in a stack and pick up where the other one left of
+///
 fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i32) u32 {
+    var stack: [1000]u32 = undefined;
+    var stack_head: u32 = 1;
+    stack[0] = @intCast(u32, 0 * GRID_WIDTH + start_x);
+
     var ticks: u32 = 0;
 
     var n: u32 = 0;
     while (true) : (n += 1) {
-        var y: i32 = 0;
-        var x: i32 = start_x;
+        stack_head -= 1;
+        const prev_idx = stack[stack_head];
+        var y: i32 = @intCast(i32, prev_idx / GRID_WIDTH);
+        var x: i32 = @intCast(i32, prev_idx % GRID_WIDTH);
+
         while (true) {
             //Try down first
             const y_down = y + 1;
@@ -124,6 +130,8 @@ fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i3
             const idx_down = @intCast(u32, y_down * GRID_WIDTH + x);
             if (grid.isSet(idx_down) == false) {
                 y = y_down;
+                stack_head += 1;
+                stack[stack_head] = idx_down;
                 continue;
             }
 
@@ -136,6 +144,8 @@ fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i3
             if (grid.isSet(idx_downleft) == false) {
                 y = y_down;
                 x = x_left;
+                stack_head += 1;
+                stack[stack_head] = idx_downleft;
                 continue;
             }
 
@@ -148,6 +158,8 @@ fn sandSimulation(grid: *std.StaticBitSet(GRID_WIDTH * GRID_HEIGHT), start_x: i3
             if (grid.isSet(idx_downright) == false) {
                 y = y_down;
                 x = x_right;
+                stack_head += 1;
+                stack[stack_head] = idx_downright;
                 continue;
             }
 
