@@ -21,7 +21,7 @@ pub fn main() !void {
     const result_1 = try runSimulation(input_file[0..], gpa.allocator(), 2);
     const result_2 = try runSimulation(input_file[0..], gpa.allocator(), 10);
 
-    std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
+    std.debug.print("Part 1: {}, Part 2: {} ms: {d:.5}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
 /// Knots start at the same location

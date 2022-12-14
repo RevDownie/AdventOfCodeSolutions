@@ -16,7 +16,7 @@ pub fn main() !void {
 
     const result_1 = part1(input_file[0..]);
     const result_2 = part2(input_file[0..]);
-    std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
+    std.debug.print("Part 1: {}, Part 2: {} ms: {d:.5}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
 /// Find the duplicate letter in the 2 halfs of each sequence and then return the score a-z => 1-26 A-Z => 27-52

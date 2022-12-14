@@ -30,7 +30,7 @@ pub fn main() !void {
     try executeInstructions9001(input_file[INSTRUCTION_OFFSET..], stacks[0..]);
     const result_2 = readTopCrates(stacks);
 
-    std.debug.print("Part 1: {s}, Part 2: {s} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
+    std.debug.print("Part 1: {s}, Part 2: {s} ms: {d:.5}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
 /// Input is in the format [A] [B] [C] with each col a stack and each row crates

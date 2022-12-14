@@ -14,7 +14,7 @@ pub fn main() !void {
     const result_1 = findStartOfPacketMarker(input_file[0..], 4);
     const result_2 = findStartOfPacketMarker(input_file[0..], 14);
 
-    std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
+    std.debug.print("Part 1: {}, Part 2: {} ms: {d:.5}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
 /// Look through the data in a sliding window of N characters until we find N unique characters

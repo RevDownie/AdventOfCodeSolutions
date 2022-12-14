@@ -26,7 +26,7 @@ pub fn main() !void {
     var result_2: u32 = undefined;
     try run(input_file[0..], &result_1, &result_2);
 
-    std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
+    std.debug.print("Part 1: {}, Part 2: {} ms: {d:.5}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
 /// Sum the 1 based index of pairs that are in the right order, to be in the right order

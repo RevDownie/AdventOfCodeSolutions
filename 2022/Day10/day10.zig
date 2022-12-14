@@ -28,7 +28,7 @@ pub fn main() !void {
     var screen = [_]u8{'.'} ** (SCREEN_WIDTH * SCREEN_HEIGHT);
     const result_1 = try runSimulation(input_file[0..], 20, 40, screen[0..]);
 
-    std.debug.print("Part 1: {}, Part 2: See Below ms: {}\n", .{ result_1, @intToFloat(f64, t.read()) / 1000000.0 });
+    std.debug.print("Part 1: {}, Part 2: See Below ms: {d:.5}\n", .{ result_1, @intToFloat(f64, t.read()) / 1000000.0 });
 
     var i: usize = 0;
     while (i < SCREEN_HEIGHT) : (i += 1) {

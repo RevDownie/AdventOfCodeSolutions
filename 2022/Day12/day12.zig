@@ -22,7 +22,7 @@ pub fn main() !void {
     const result_1 = try findShortestPath(input_file[0..], gpa.allocator(), 'S', 'E', 'z', validMoveForwards);
     const result_2 = try findShortestPath(input_file[0..], gpa.allocator(), 'E', 'S', 'a', validMoveBackwards);
 
-    std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
+    std.debug.print("Part 1: {}, Part 2: {} ms: {d:.5}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
 /// Part 1: Each cell in the grid has an altitude denoted a(low) to z(high) we need to find the shortest path from S to E that doesn't take more than one

@@ -13,7 +13,7 @@ pub fn main() !void {
 
     const result_1 = try calculateScoreTwoHands(input_file[0..]);
     const result_2 = try calculateScoreHandAndResult(input_file[0..]);
-    std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
+    std.debug.print("Part 1: {}, Part 2: {} ms: {d:.5}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
 /// Data is in the format 'A X\n' with each turn on a new line. A = Rock, B = Paper, C = Scissors for them and XYZ equiavlent for us

@@ -33,7 +33,7 @@ pub fn main() !void {
     const result_1 = sumSizesUnderValue(dir_sizes_map[0..next_dir_id], 100000);
     const result_2 = findSmallestDirectorySizeToFreeSpace(dir_sizes_map[0..next_dir_id], 70000000, 30000000);
 
-    std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
+    std.debug.print("Part 1: {}, Part 2: {} ms: {d:.5}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
 
 /// Keep a stack of the current directories we are in
