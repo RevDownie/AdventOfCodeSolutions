@@ -4,13 +4,17 @@ const input_file = @embedFile("input.txt");
 
 //I really should calculate these based on the amount of fall off room required but just hard coding them based on the input data
 const GRID_WIDTH = 500;
-const GRID_HEIGHT = 180;
+const GRID_HEIGHT = 160;
 const GRID_WIDTH_OFFSET = 300; //All coords are up around ~500 so wastes alot of space in the array - this just slides it forward
+const DROP_X = 500 - GRID_WIDTH_OFFSET;
 
 /// Advent of code - Day 14
 ///
 /// Part 1 - Plot the rocks on a grid and then particle deposition sand until no more come to rest
 /// Part 2 - Add a floor and perform the particle deposition until the sand blocks the opening
+///
+/// TODO: Potential optmisation
+/// Store the path of the falling sand (a stack) so we don't have to recalculate for each new particle.
 ///
 pub fn main() !void {
     const timer = std.time.Timer;
@@ -18,7 +22,7 @@ pub fn main() !void {
 
     var highest_y: u32 = 0;
     var grid_1 = try buildStartingGrid(input_file[0..], &highest_y);
-    const result_1 = sandSimulation(&grid_1, 500 - GRID_WIDTH_OFFSET);
+    const result_1 = sandSimulation(&grid_1, DROP_X);
 
     var grid_2 = try buildStartingGrid(input_file[0..], &highest_y);
     //Add floor
@@ -26,7 +30,7 @@ pub fn main() !void {
     while (x < GRID_WIDTH) : (x += 1) {
         grid_2.set((highest_y + 2) * GRID_WIDTH + x);
     }
-    const result_2 = sandSimulation(&grid_2, 500 - GRID_WIDTH_OFFSET);
+    const result_2 = sandSimulation(&grid_2, DROP_X);
 
     std.debug.print("Part 1: {}, Part 2: {} ms: {}\n", .{ result_1, result_2, @intToFloat(f64, t.read()) / 1000000.0 });
 }
