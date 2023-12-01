@@ -85,7 +85,7 @@ fn part2(data: []const u8) u32 {
                     digits[1] = digits[digit_idx]; // Handle the case where there is only one digit found
                     digit_idx += 1;
                 }
-                fwd_idx += c.wordLen - 2; //We need to substract and additional letter because of the overlap
+                fwd_idx += c.wordLen - 2; //We need to substract an additional letter because of the overlap
             }
         }
 
