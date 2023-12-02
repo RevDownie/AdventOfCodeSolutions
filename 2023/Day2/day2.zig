@@ -2,27 +2,31 @@ const std = @import("std");
 
 const input_file = @embedFile("input.txt");
 
+const Result = struct { sum_of_possible_game_ids: u32, sum_power_of_min_cubes: u32 };
+
 /// Advent of code - Day 2
 ///
-/// Part 1 - Parse sets of coloured balls and see if any are over the limit
-/// Part 2 - ???
+/// Part 1 - Parse sets of coloured cubes and see if any are over the limit
+/// Part 2 - Parse sets of coloured cubes and find the max in each set
 ///
 pub fn main() !void {
     const timer = std.time.Timer;
     var t = try timer.start();
 
-    const result_1 = try part1(input_file[0..]);
-    const result_2 = 0;
+    const result = try run(input_file[0..]);
     const duration: f64 = @floatFromInt(t.read());
-    std.debug.print("Part 1: {}, Part 2: {} ms: {d:.5}\n", .{ result_1, result_2, duration / 1000000.0 });
+    std.debug.print("Part 1: {}, Part 2: {} ms: {d:.5}\n", .{ result.sum_of_possible_game_ids, result.sum_power_of_min_cubes, duration / 1000000.0 });
 }
 
 /// Parse lines of the following "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"
 /// a semi colon denotes the end of a set and we need to detect lines where each set can contain no more
 /// than r12, g13, b14
 ///
-fn part1(data: []const u8) !u32 {
-    var total: u32 = 0;
+/// At the same time look for the max num of a given color as this is the min number to make that game possible
+///
+fn run(data: []const u8) !Result {
+    var sum_of_possible_game_ids: u32 = 0;
+    var sum_power_of_min_cubes: u32 = 0;
 
     var line_it = std.mem.tokenize(u8, data, "\n");
     var game_id: u32 = 0;
@@ -32,6 +36,9 @@ fn part1(data: []const u8) !u32 {
         var r: u8 = 0;
         var g: u8 = 0;
         var b: u8 = 0;
+        var rmx: u32 = 0;
+        var gmx: u32 = 0;
+        var bmx: u32 = 0;
 
         var cursor_idx: usize = 0;
         while (line[cursor_idx] != ':') : (cursor_idx += 1) {} //Skip "Game X"
@@ -61,19 +68,26 @@ fn part1(data: []const u8) !u32 {
                 else => @panic("Incorrect colour start letter"),
             }
 
-            if (r > 12 or g > 13 or b > 14) {
-                //Set has too many and game is not possible
-                continue :outer;
-            }
-
             if (cursor_idx >= line.len) {
-                //Game is possible
-                total += game_id;
+                //End of set and line
+                rmx = @max(r, rmx);
+                gmx = @max(g, gmx);
+                bmx = @max(b, bmx);
+
+                if (rmx <= 12 and gmx <= 13 and bmx <= 14) {
+                    //Game is possible
+                    sum_of_possible_game_ids += game_id;
+                }
+
+                sum_power_of_min_cubes += rmx * gmx * bmx;
                 continue :outer;
             }
 
             if (line[cursor_idx] == ';') {
                 //End of set
+                rmx = @max(r, rmx);
+                gmx = @max(g, gmx);
+                bmx = @max(b, bmx);
                 r = 0;
                 g = 0;
                 b = 0;
@@ -85,7 +99,7 @@ fn part1(data: []const u8) !u32 {
         }
     }
 
-    return total;
+    return Result{ .sum_of_possible_game_ids = sum_of_possible_game_ids, .sum_power_of_min_cubes = sum_power_of_min_cubes };
 }
 
 inline fn isDigit(char: u8) bool {
