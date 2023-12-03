@@ -30,49 +30,16 @@ fn part1(data: []const u8, width: isize, allocator: std.mem.Allocator) !u32 {
     var searched_idxs = try std.DynamicBitSet.initEmpty(allocator, data.len);
     defer searched_idxs.deinit();
 
+    const steps = [8]isize{ 1, -1, -(width + 1), width + 1, -(width + 2), -width, width, width + 2 };
+
     var i: usize = 0;
     while (i < data.len) : (i += 1) {
         if (isSymbol(data[i]) == true) {
             var sig_i: isize = @intCast(i);
-
-            //Right
-            if (trySearch(data, sig_i, 1, &searched_idxs)) |v| {
-                total += v;
-            }
-
-            //Left
-            if (trySearch(data, sig_i, -1, &searched_idxs)) |v| {
-                total += v;
-            }
-
-            //Top
-            if (trySearch(data, sig_i, -(width + 1), &searched_idxs)) |v| {
-                total += v;
-            }
-
-            //Bottom
-            if (trySearch(data, sig_i, width + 1, &searched_idxs)) |v| {
-                total += v;
-            }
-
-            //TL
-            if (trySearch(data, sig_i, -(width + 2), &searched_idxs)) |v| {
-                total += v;
-            }
-
-            //TR
-            if (trySearch(data, sig_i, -width, &searched_idxs)) |v| {
-                total += v;
-            }
-
-            //BL
-            if (trySearch(data, sig_i, width, &searched_idxs)) |v| {
-                total += v;
-            }
-
-            //BR
-            if (trySearch(data, sig_i, width + 2, &searched_idxs)) |v| {
-                total += v;
+            for (steps) |step| {
+                if (trySearch(data, sig_i, step, &searched_idxs)) |v| {
+                    total += v;
+                }
             }
         }
     }
