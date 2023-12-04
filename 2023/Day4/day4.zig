@@ -73,7 +73,7 @@ fn run(data: []const u8, allocator: std.mem.Allocator) !Result {
         //Make copies for part 2
         var i: usize = 0;
         while (i < num_matches) : (i += 1) {
-            card_counts[card_idx + i + 1] += 1 * card_counts[card_idx];
+            card_counts[card_idx + i + 1] += card_counts[card_idx];
         }
     }
 
