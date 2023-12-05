@@ -15,12 +15,9 @@ const Result = struct {
 pub fn main() !void {
     const timer = std.time.Timer;
 
-    var buffer: [1024 * 30]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buffer);
-
     var t = try timer.start();
 
-    const result = try run(input_file[0..], fba.allocator());
+    const result = try run(input_file[0..]);
     const duration: f64 = @floatFromInt(t.read());
     std.debug.print("Part 1: {}, Part 2: {} ms: {d:.5}\n", .{ result.part1, result.part2, duration / 1000000.0 });
 }
@@ -31,13 +28,13 @@ pub fn main() !void {
 /// Part2: So each winning number wins a copy of the cards below. So if we have 4 matches in card 1 we win a copy of card 2,3,4,5
 /// when you win on card 2 all copies of card 2 win. We have to count the total number of cards at the end
 ///
-fn run(data: []const u8, allocator: std.mem.Allocator) !Result {
+fn run(data: []const u8) !Result {
     var card_counts = [_]u32{0} ** 200;
     var score: u32 = 0;
 
     var line_it = std.mem.tokenize(u8, data, "\n");
     while (line_it.next()) |line| {
-        var winning_set = std.AutoHashMap(u32, void).init(allocator);
+        var winning_set = std.StaticBitSet(100).initEmpty();
 
         var card_it = std.mem.tokenize(u8, line, " ");
         _ = card_it.next(); //Skip the card label
@@ -51,19 +48,17 @@ fn run(data: []const u8, allocator: std.mem.Allocator) !Result {
                 break;
             }
             const num = try std.fmt.parseInt(u32, unparsed, 10);
-            try winning_set.put(num, {});
+            winning_set.set(num);
         }
 
         //Our numbers
         var num_matches: u32 = 0;
         while (card_it.next()) |unparsed| {
             const num = try std.fmt.parseInt(u32, unparsed, 10);
-            if (winning_set.get(num)) |_| {
+            if (winning_set.isSet(num)) {
                 num_matches += 1;
             }
         }
-
-        winning_set.deinit();
 
         //Count score - use the geometric sequence equation 1,2,4,8,16
         if (num_matches > 0) {
