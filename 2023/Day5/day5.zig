@@ -24,7 +24,7 @@ const Maps = [7]std.ArrayList(Map);
 /// Advent of code - Day 5
 ///
 /// Part 1 - Find the closest location to plant a seed
-/// Part 2 - ???
+/// Part 2 - as part 1 but with large ranged
 ///
 pub fn main() !void {
     const timer = std.time.Timer;
