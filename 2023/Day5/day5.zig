@@ -4,7 +4,8 @@ const input_file = @embedFile("input.txt");
 
 const Seed = struct {
     start: u64,
-    end: u64,
+    range: u64,
+    type: u8,
 };
 
 const Seeds = struct {
@@ -18,7 +19,7 @@ const Map = struct {
     range: u64,
 };
 
-const Maps = [8]std.ArrayList(Map);
+const Maps = [7]std.ArrayList(Map);
 
 /// Advent of code - Day 5
 ///
@@ -56,7 +57,7 @@ fn part1ParseSeeds(data: []const u8) !Seeds {
         _ = seed_it.next(); //Skip "seeds:"
         while (seed_it.next()) |seed| {
             const seed_id = try std.fmt.parseInt(u64, seed, 10);
-            seeds.ranges[seeds.count] = Seed{ .start = seed_id, .end = seed_id + 1 };
+            seeds.ranges[seeds.count] = Seed{ .start = seed_id, .range = 1, .type = 0 };
             seeds.count += 1;
         }
     }
@@ -77,7 +78,7 @@ fn part2ParseSeeds(data: []const u8) !Seeds {
         while (seed_it.next()) |seed| {
             const seed_start = try std.fmt.parseInt(u64, seed, 10);
             const seed_range = try std.fmt.parseInt(u64, seed_it.next() orelse "", 10);
-            seeds.ranges[seeds.count] = Seed{ .start = seed_start, .end = seed_start + seed_range };
+            seeds.ranges[seeds.count] = Seed{ .start = seed_start, .range = seed_range, .type = 0 };
             seeds.count += 1;
         }
     }
@@ -86,11 +87,12 @@ fn part2ParseSeeds(data: []const u8) !Seeds {
 }
 
 fn parseMaps(data: []const u8, allocator: std.mem.Allocator) !Maps {
-    var maps = [_]std.ArrayList(Map){std.ArrayList(Map).init(allocator)} ** 8;
+    var maps = [_]std.ArrayList(Map){std.ArrayList(Map).init(allocator)} ** 7;
     var count: u32 = 0;
 
     var line_it = std.mem.tokenize(u8, data, "\n");
     _ = line_it.next(); //Skip "seeds:"
+    _ = line_it.next();
 
     while (line_it.next()) |line| {
         if (isDigit(line[0]) == false) {
@@ -109,35 +111,96 @@ fn parseMaps(data: []const u8, allocator: std.mem.Allocator) !Maps {
 ///
 /// The maps are sequential so it goes seeds-soil, soil-fertlizer, etc in the data
 ///
+/// This uses a recursive range splitting approach
+///
 fn run(seeds: Seeds, maps: Maps) u64 {
+    var seed_stack: [100]Seed = undefined;
+    var head: usize = seeds.count;
+
+    //Fill the starting input for seed to soil
     var i: usize = 0;
-    var min_loc: u64 = std.math.maxInt(u64);
     while (i < seeds.count) : (i += 1) {
-        var seed = seeds.ranges[i].start;
-        while (seed < seeds.ranges[i].end) : (seed += 1) {
-            var input = seed;
-            for (maps) |map| {
-                input = performMap(input, map.items);
+        seed_stack[i] = seeds.ranges[i];
+    }
+
+    var min_loc: u64 = std.math.maxInt(u64);
+
+    outer: while (head > 0) {
+        head -= 1;
+        const seed = seed_stack[head];
+
+        //Check if the seed has made it through all the maps to the final location and update the min
+        if (seed.type == maps.len) {
+            if (seed.start < min_loc) {
+                min_loc = seed.start;
+            }
+            continue :outer;
+        }
+
+        //Map to the next layer
+        const map = maps[seed.type];
+        for (map.items) |map_range| {
+            const seed_end = seed.start + seed.range - 1;
+            const map_end = map_range.src_start + map_range.range - 1;
+
+            //Check if range is full contained and if so we can remap and proceed to the next layer
+            if (seed.start >= map_range.src_start and seed_end <= map_end) {
+                seed_stack[head] = Seed{ .start = seed.start + map_range.dst_start - map_range.src_start, .range = seed.range, .type = seed.type + 1 };
+                head += 1;
+                continue :outer;
             }
 
-            if (input < min_loc) {
-                min_loc = input;
+            //Check if right is overhanging and split in 2
+            if (seed.start >= map_range.src_start and seed.start < map_end) {
+                //Left
+                const overflow = seed_end - map_end;
+                seed_stack[head] = Seed{ .start = seed.start, .range = seed.range - overflow, .type = seed.type };
+                head += 1;
+
+                //Right
+                seed_stack[head] = Seed{ .start = map_end, .range = overflow, .type = seed.type };
+                head += 1;
+                continue :outer;
+            }
+
+            //Check if left is overhanging and split in 2
+            if (seed_end >= map_range.src_start and seed_end <= map_end) {
+                //Left
+                const overflow = map_range.src_start - seed.start;
+                seed_stack[head] = Seed{ .start = seed.start, .range = overflow, .type = seed.type };
+                head += 1;
+
+                //Right
+                seed_stack[head] = Seed{ .start = map_range.src_start, .range = seed.range - overflow, .type = seed.type };
+                head += 1;
+                continue :outer;
+            }
+
+            //Check if the range extends beyond bounds on both sides and split into 3
+            if (seed.start < map_range.src_start and seed_end > map_end) {
+                //Left
+                const overflow_l = map_range.src_start - seed.start;
+                seed_stack[head] = Seed{ .start = seed.start, .range = overflow_l, .type = seed.type };
+                head += 1;
+
+                //Center
+                seed_stack[head] = Seed{ .start = map_range.src_start, .range = map_range.range, .type = seed.type };
+                head += 1;
+
+                //Right
+                const overflow_r = seed_end - map_end;
+                seed_stack[head] = Seed{ .start = map_end, .range = overflow_r, .type = seed.type };
+                head += 1;
+                continue :outer;
             }
         }
+
+        //No explicit mapping - just keeps the same values and moves to the next layer
+        seed_stack[head] = Seed{ .start = seed.start, .range = seed.range, .type = seed.type + 1 };
+        head += 1;
     }
 
     return min_loc;
-}
-
-inline fn performMap(input: u64, maps: []const Map) u64 {
-    for (maps) |map| {
-        if (input >= map.src_start and input < map.src_start + map.range) {
-            return input + map.dst_start - map.src_start;
-        }
-    }
-
-    //Rule is we do a 1-1 mapping if no specific mapping found
-    return input;
 }
 
 inline fn isDigit(char: u8) bool {
