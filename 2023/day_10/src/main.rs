@@ -3,14 +3,13 @@ use std::collections::HashSet;
 /// Advent of code - Day 10
 ///
 /// Part 1 - Given a sequence of pipes (horizontal, vertical, corners) navigate a looped path from S to S and find the furthest point
-/// Part 2 - ???
+/// Part 2 - Count the number of tiles enclosed in the loop
 ///
 fn main() {
     let now = std::time::Instant::now();
     let input = std::fs::read("input.txt").unwrap();
 
-    let result_1 = part_1(input.as_slice());
-    let result_2 = 0;
+    let (result_1, result_2) = run(input.as_slice());
 
     println!(
         "Part 1: {}, Part 2: {}, took {:#?}",
@@ -20,9 +19,10 @@ fn main() {
     );
 }
 
-/// Do an graph search (depth first) until we get back to S and then half the path length
+/// PT1: Do a graph search (depth first) until we get back to S and then half the path length to find the furthest distance from S
+/// PT2: Use knot theory such that looking at the elements to the left if there are and off number then we are inside a loop
 ///
-fn part_1(data: &[u8]) -> usize {
+fn run(data: &[u8]) -> (usize, usize) {
     //Find the width of the grid
     let mut width: usize = 0;
     while data[width] != b'\n' {
@@ -37,16 +37,40 @@ fn part_1(data: &[u8]) -> usize {
     }
 
     //Start at S and find our way back to S
-    let path_len = dfs(start_idx, data, width);
+    let path = dfs(start_idx, data, width);
+    let path_set: HashSet<usize> = HashSet::from_iter(path.iter().cloned());
 
-    return path_len / 2;
+    //Cout how many  |, J, L (the only types we could cross with a horizontal line), or S (if S is also one of I,J,L) appear to the left of this index
+    //and if it is odd then this is in the loop
+    //NOTE: Just tried both ways to determine whether S should be included for my input
+    let mut num_inside: usize = 0;
+    let rows = data.len() / width;
+    for y in 0..rows {
+        let mut num_to_left: usize = 0;
+        for x in 0..width - 1 {
+            let i = y * width + x;
+
+            let in_path = path_set.contains(&i);
+
+            if !in_path && num_to_left % 2 > 0 {
+                num_inside += 1;
+            }
+
+            if in_path && matches!(data[i], b'|' | b'J' | b'L' | b'S') {
+                num_to_left += 1;
+            }
+        }
+    }
+
+    (path.len() / 2, num_inside)
 }
 
 /// Depth first search but checking for a loop - so start idx is the end idx too
+/// Returns the path of the loop
 ///
-fn dfs(start_idx: usize, grid: &[u8], width: usize) -> usize {
+fn dfs(start_idx: usize, grid: &[u8], width: usize) -> Vec<usize> {
     let mut visited: HashSet<usize> = HashSet::new();
-    let mut path_len: usize = 0;
+    let mut path: Vec<usize> = Vec::new();
 
     let mut open_stack: [usize; 10000] = [0; 10000];
     let mut stack_head: usize = 0;
@@ -60,8 +84,8 @@ fn dfs(start_idx: usize, grid: &[u8], width: usize) -> usize {
         let curr_idx = open_stack[stack_head];
 
         //Reached the target? It's a loop so we have to check it is in the path
-        if path_len > 1 && curr_idx == start_idx {
-            return path_len;
+        if path.len() > 1 && curr_idx == start_idx {
+            break;
         }
 
         //If we have explored this then don't bother exploring again
@@ -69,7 +93,7 @@ fn dfs(start_idx: usize, grid: &[u8], width: usize) -> usize {
         if !new_node {
             continue;
         }
-        path_len += 1;
+        path.push(curr_idx);
 
         //Find valid adjacent nodes
         //-Left
@@ -82,7 +106,7 @@ fn dfs(start_idx: usize, grid: &[u8], width: usize) -> usize {
         }
 
         //-Right
-        if curr_idx % width <= width - 1 {
+        if curr_idx % width < width {
             let next_idx = curr_idx + 1;
             if is_valid_hor(grid[curr_idx], grid[next_idx]) {
                 open_stack[stack_head] = next_idx;
@@ -109,7 +133,7 @@ fn dfs(start_idx: usize, grid: &[u8], width: usize) -> usize {
         }
     }
 
-    return 0;
+    path
 }
 
 //Encoding all valid connections
