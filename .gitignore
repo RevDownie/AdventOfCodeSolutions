@@ -1,3 +1,5 @@
 ﻿*.pdb
 *.exe
 **/zig-cache/
+**/target/
+*.lock
