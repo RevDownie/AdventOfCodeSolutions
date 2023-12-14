@@ -3,17 +3,25 @@ struct Pattern {
     col_masks: Vec<u32>,
 }
 
+#[derive(PartialEq)]
+enum CmpResult {
+    Eql,
+    Smudged,
+    NotEql,
+}
+
 /// Advent of code - Day 13
 ///
 /// Part 1 - Find the number of mirrored rows and cols
-/// Part 2 - ???
+/// Part 2 - Find the "smudges" that if changed would cause a different reflection
 ///
 fn main() {
     let now = std::time::Instant::now();
     let input = include_str!("input.txt");
 
-    let result_1: usize = input.split("\n\n").map(|p| run(&parse(p))).sum();
-    let result_2 = 0;
+    let patterns = input.split("\n\n").map(parse).collect::<Vec<Pattern>>();
+    let result_1: usize = patterns.iter().map(|p| run(p, false)).sum();
+    let result_2: usize = patterns.iter().map(|p| run(p, true)).sum();
 
     println!(
         "Part 1: {}, Part 2: {}, took {:#?}",
@@ -23,6 +31,8 @@ fn main() {
     );
 }
 
+/// Pack the rows and columns into a single int so we can compare rows with a single comparison
+///
 fn parse(pattern_block: &str) -> Pattern {
     let width = pattern_block.chars().take_while(|&c| c != '\n').count();
     let height = pattern_block.lines().count();
@@ -58,42 +68,105 @@ fn parse(pattern_block: &str) -> Pattern {
 
             packed |= c << y;
         }
-        // println!("{:#016b}", packed);
+
         pattern.col_masks.push(packed);
     }
 
     pattern
 }
 
-fn run(p: &Pattern) -> usize {
-    'outer: for c in 0..p.col_masks.len() - 1 {
-        if p.col_masks[c] == p.col_masks[c + 1] {
-            let rng = c.min(p.col_masks.len() - 2 - c) ;
-            println!("Check col rng: {}|{}, {} => {}", c, c+1, p.col_masks.len(), rng);
-            for i in 0..rng {
-                println!("{},{}", c-(i+1), c+(i+2));
-                if p.col_masks[c-(i+1)] != p.col_masks[c+(i+2)] {
+/// Check for rows and columns that are next to each other that match
+/// These are potential reflection boundaries. We then work out from there to check that
+/// the surrounding rows or columns are reflected
+///
+/// We pass in the compare function because for part 2 for every pair of rows or columns we check
+/// to see if changing a single bit would make a reflection. There needs to be at least one "smudge"
+///
+fn run(p: &Pattern, smudge_required: bool) -> usize {
+    let c = if smudge_required {
+        solve_single_dir_smudged(&p.col_masks)
+    } else {
+        solve_single_dir(&p.col_masks)
+    };
+    if c > 0 {
+        return c;
+    }
+
+    let r = if smudge_required {
+        solve_single_dir_smudged(&p.row_masks)
+    } else {
+        solve_single_dir(&p.row_masks)
+    };
+    r * 100
+}
+
+/// Allows us to solve for rows or cols with a single function
+/// Counts the number of cols/rows that are left/above the found reflection
+///
+fn solve_single_dir(masks: &Vec<u32>) -> usize {
+    'outer: for c in 0..masks.len() - 1 {
+        if masks[c] == masks[c + 1] {
+            let m = c.min(masks.len() - 2 - c);
+            for i in 0..m {
+                if masks[c - (i + 1)] != masks[c + (i + 2)] {
                     continue 'outer;
                 }
             }
 
-            println!("Mirror col: {}", c + 1);
             return c + 1;
         }
     }
 
-    'outer: for r in 0..p.row_masks.len() - 1 {
-        if p.row_masks[r] == p.row_masks[r + 1] {
-            let rng = r.min(p.row_masks.len() - 2 - r);
-            for i in 0..rng {
-                if p.row_masks[r-(i+1)] != p.row_masks[r+(i+2)] {
-                    continue 'outer;
+    0
+}
+
+/// Allows us to solve for rows or cols with a single function
+/// Counts the number of cols/rows that are left/above the found reflection
+///
+/// This is the smudged version so will consider any row/col where a single change would 
+/// allow a reflection
+///
+fn solve_single_dir_smudged(masks: &Vec<u32>) -> usize {
+    'outer: for c in 0..masks.len() - 1 {
+        let cmp = compare(masks[c], masks[c + 1]);
+        let mut smudged = cmp == CmpResult::Smudged;
+
+        if matches!(cmp, CmpResult::Smudged | CmpResult::Eql) {
+            let m = c.min(masks.len() - 2 - c);
+            for i in 0..m {
+                let cmp = compare(masks[c - (i + 1)], masks[c + (i + 2)]);
+                match cmp {
+                    CmpResult::NotEql => continue 'outer,
+                    CmpResult::Eql => {}
+                    CmpResult::Smudged => {
+                        if smudged {
+                            continue 'outer;
+                        } else {
+                            smudged = true;
+                        }
+                    }
                 }
             }
-            println!("Mirror row: {}", r + 1);
-            return (r + 1) * 100;
+
+            if smudged {
+                return c + 1;
+            }
         }
     }
 
     0
+}
+
+fn compare(a: u32, b: u32) -> CmpResult {
+    if a == b {
+        return CmpResult::Eql;
+    }
+
+    //Check if number is a Po2 which means a single bit is set
+    let val = a ^ b;
+    if val & (val - 1) == 0 {
+        return CmpResult::Smudged;
+    }
+
+    CmpResult::NotEql
 }
