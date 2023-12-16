@@ -1,3 +1,4 @@
+#[derive(Clone, Copy)]
 struct Beam {
     head_idx: isize,
     dir: isize,
@@ -12,8 +13,16 @@ fn main() {
     let now = std::time::Instant::now();
     let input = std::fs::read("input.txt").unwrap();
 
-    let result_1 = simulate(&input);
-    let result_2 = 0;
+    let width = input.iter().take_while(|&c| *c != b'\n').count() as isize + 1;
+    let height = (input.len() as isize) / width;
+
+    let start_1 = Beam {
+        head_idx: -1,
+        dir: 1,
+    };
+
+    let result_1 = simulate(start_1, &input, width, height);
+    let result_2 = simulate_max(&input, width, height);
 
     println!(
         "Part 1: {}, Part 2: {}, took {:#?}",
@@ -26,15 +35,9 @@ fn main() {
 /// Bounce and split lasers based on symbols and track the cells in the grid that
 /// they interact with. Then sum the number of cells
 ///
-fn simulate(grid: &[u8]) -> usize {
-    let width = grid.iter().take_while(|&c| *c != b'\n').count() as isize + 1;
-    let height = (grid.len() as isize) / width;
-
+fn simulate(start: Beam, grid: &[u8], width: isize, height: isize) -> usize {
     let mut beams: Vec<Beam> = Vec::new();
-    beams.push(Beam {
-        head_idx: -1,
-        dir: 1,
-    });
+    beams.push(start);
 
     let mut energised = vec![false; (width * height) as usize];
     let mut num_energised: usize = 0;
@@ -104,16 +107,44 @@ fn simulate(grid: &[u8]) -> usize {
     num_energised
 }
 
-fn dump_grid(energised: &[bool], width: isize, height: isize) {
-    let h = height as usize;
-    let w = (width - 1) as usize;
-    for y in 0..h {
-        for x in 0..w {
-            print!("{}", if energised[y * (w + 1) + x] { '#' } else { '.' });
-        }
-        println!();
+/// Simulate all possible starting places and find the most efficient
+/// Should really have done some memoisation to avoid repeating the same patterns but turns
+/// out brute force runs pretty quick
+///
+fn simulate_max(grid: &[u8], width: isize, height: isize) -> usize {
+    let mut beams: Vec<Beam> = Vec::with_capacity((2 * width + 2 * height) as usize);
+
+    //Note: We always start outside the grid
+    for x in 0..width - 1 {
+        beams.push(Beam {
+            head_idx: -1 * width + x,
+            dir: width,
+        });
+
+        beams.push(Beam {
+            head_idx: height * width + x,
+            dir: -width,
+        });
     }
-    println!();
+
+    for y in 0..height {
+        beams.push(Beam {
+            head_idx: y * width + -1,
+            dir: 1,
+        });
+
+        beams.push(Beam {
+            head_idx: y * width,
+            dir: -1,
+        });
+    }
+
+    //Find the max
+    beams
+        .iter()
+        .map(|b| simulate(*b, grid, width, height))
+        .max()
+        .unwrap()
 }
 
 /// If beam comes from the left we reflect down
