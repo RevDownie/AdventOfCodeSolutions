@@ -27,15 +27,15 @@ impl PartialOrd for Node {
 
 /// Advent of code - Day 17
 ///
-/// Part 1 - Find the path with minimal heat loss
-/// Part 2 - ???
+/// Part 1 - Find the path with minimal heat loss - cannot go more than 3 in a straight line
+/// Part 2 - As above but cannot go more than 10 in a straight line and must go at least 4 in a straight line
 ///
 fn main() {
     let now = std::time::Instant::now();
     let input = std::fs::read("input.txt").unwrap();
 
-    let result_1 = find_path(&input);
-    let result_2 = 0;
+    let result_1 = find_path(&input, (1, 3));
+    let result_2 = find_path(&input, (4, 10));
 
     println!(
         "Part 1: {}, Part 2: {}, took {:#?}",
@@ -49,7 +49,7 @@ fn main() {
 /// We cannot move more than 3 cells in the same direction
 /// We cannot move diagnonally
 ///
-fn find_path(grid: &[u8]) -> usize {
+fn find_path(grid: &[u8], minmax_steps_in_dir: (u8, u8)) -> usize {
     let width = grid.iter().take_while(|&c| *c != b'\n').count() as isize + 1;
     let height = (grid.len() as isize) / width;
     let end_idx: usize = grid.len() - 2;
@@ -69,7 +69,7 @@ fn find_path(grid: &[u8]) -> usize {
 
     while let Some(curr_node) = open_queue.pop() {
         //Reached the target?
-        if curr_node.idx == end_idx {
+        if curr_node.idx == end_idx && curr_node.steps_in_dir >= minmax_steps_in_dir.0 {
             return curr_node.cost;
         }
 
@@ -95,13 +95,15 @@ fn find_path(grid: &[u8]) -> usize {
                 continue;
             }
 
-            //Check length limit in same dir is not exceeded
+            //Check length limit in same dir
             let next_steps_in_dir = if s == curr_node.from_dir {
                 curr_node.steps_in_dir + 1
             } else {
                 1
             };
-            if next_steps_in_dir > 3 {
+            if (curr_node.from_dir != 0 && s != curr_node.from_dir && curr_node.steps_in_dir < minmax_steps_in_dir.0)
+                || next_steps_in_dir > minmax_steps_in_dir.1
+            {
                 continue;
             }
 
