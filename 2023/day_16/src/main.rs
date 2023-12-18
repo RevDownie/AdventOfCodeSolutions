@@ -7,7 +7,7 @@ struct Beam {
 /// Advent of code - Day 16
 ///
 /// Part 1 - Lasers bouncing and splitting around a grid
-/// Part 2 - ???
+/// Part 2 - Find optimal from all possible starting locs
 ///
 fn main() {
     let now = std::time::Instant::now();
