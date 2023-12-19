@@ -8,7 +8,7 @@ struct Workflow {
 }
 
 impl Workflow {
-    fn run(&self, vals: &[usize]) -> u32 {
+    fn run(&self, vals: &[u16]) -> u32 {
         for c in &self.conditionals[0..self.num_conditionals] {
             let val = vals[c.var_idx];
             if val > c.thresholds.0 && val < c.thresholds.1 {
@@ -24,7 +24,7 @@ impl Workflow {
 #[derive(Copy, Clone, Debug)]
 struct Conditional {
     var_idx: usize,
-    thresholds: (usize, usize),
+    thresholds: (u16, u16),
     dest: u32,
 }
 
@@ -110,11 +110,11 @@ fn parse_conditional(l: &str) -> (Conditional, usize) {
     while bytes[j] != b':' {
         j += 1;
     }
-    let val = l[i..j].parse::<usize>().unwrap();
+    let val = l[i..j].parse::<u16>().unwrap();
     i = j + 1;
 
     let thresholds = match op {
-        b'>' => (val, usize::MAX),
+        b'>' => (val, u16::MAX),
         b'<' => (0, val),
         _ => unreachable!(),
     };
@@ -138,7 +138,7 @@ fn parse_conditional(l: &str) -> (Conditional, usize) {
 
 /// FORMAT: {x=787,m=2655,a=1222,s=2876}
 ///
-fn parse_values(l: &str) -> Vec<usize> {
+fn parse_values(l: &str) -> Vec<u16> {
     let mut vals = vec![0; 4];
 
     for group in l[1..l.len() - 1].split(',') {
@@ -166,7 +166,7 @@ fn run(lines: std::str::Lines, workflows: &HashMap<u32, Workflow>) -> usize {
             next_wf_id = wf.run(&values);
 
             if next_wf_id == accept_id {
-                sum += values.iter().sum::<usize>();
+                sum += values.iter().map(|&v| v as usize).sum::<usize>();
                 break;
             }
 
