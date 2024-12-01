@@ -40,10 +40,7 @@ run :: proc() -> (int, int) {
         a, _, b := strings.partition(line, "   ")
         numbers_a[i] = strconv.atoi(a)
         numbers_b[i] = strconv.atoi(b)
-    }
-
-    for n in numbers_b {
-        count_in_b[n] += 1
+        count_in_b[numbers_b[i]] += 1
     }
 
     sort.merge_sort(numbers_a[:])
