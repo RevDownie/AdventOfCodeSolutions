@@ -64,6 +64,7 @@ fn part2(data: []const u8) !u64 {
         for (min..max) |n| {
             const num_digits = numDigits(n);
             const half_digits_inc = @divTrunc(num_digits, 2) + 1;
+            const mul = std.math.pow(u64, 10, num_digits) - 1;
 
             for (1..half_digits_inc) |pattern_len| {
                 if (num_digits % pattern_len != 0) {
@@ -72,7 +73,6 @@ fn part2(data: []const u8) !u64 {
 
                 const pattern = @divTrunc(n, std.math.pow(u64, 10, num_digits - pattern_len));
                 const div = std.math.pow(u64, 10, pattern_len) - 1;
-                const mul = std.math.pow(u64, 10, num_digits) - 1;
 
                 if (n * div == pattern * mul) {
                     total += n;
