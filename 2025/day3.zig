@@ -17,29 +17,32 @@ pub fn main() !void {
     std.debug.print("Part 1: {}, Part 2: {} ms: {d:.5}\n", .{ result_1, result_2, duration / 1000000.0 });
 }
 
-/// Maintain a stack, find the largest number, then search the sub space after that recursively until we have all the digits we need
+/// Greedy max, find the largest number, then search the sub space after that recursively until we have all the digits we need
 ///
 fn calculateMax(data: []const u8, comptime num_digits: u32) usize {
     var total: usize = 0;
-    var stack: [num_digits]usize = undefined;
 
     var line_it = std.mem.tokenizeAny(u8, data, "\n");
     while (line_it.next()) |line| {
-        var stack_head: usize = 0;
-        var start_idx: usize = 0;
-        var trim: usize = stack.len;
-        while (stack_head < stack.len) {
-            const max_idx = findIndexOfMax(line[start_idx .. line.len - (trim - 1)]) + start_idx;
-            stack[stack_head] = line[max_idx];
-            stack_head += 1;
-            start_idx = max_idx + 1;
-            trim -= 1;
+        var start: usize = 0;
+        var remaining: usize = num_digits;
+        var value: usize = 0;
+
+        while (remaining > 0) : (remaining -= 1) {
+            //Adjust end to ensure we have enough digits remaining
+            const end = line.len - (remaining - 1);
+            const slice = line[start..end];
+
+            const rel_idx = findIndexOfMax(slice);
+            const digit = slice[rel_idx] - '0';
+
+            value = value * 10 + digit;
+
+            // Next search must start after the chosen digit
+            start = start + rel_idx + 1;
         }
 
-        for (stack, 0..) |n, i| {
-            const exp = std.math.pow(usize, 10, stack.len - i - 1);
-            total += (n - '0') * exp;
-        }
+        total += value;
     }
 
     return total;
