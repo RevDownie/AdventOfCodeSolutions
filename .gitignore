@@ -1,6 +1,7 @@
-﻿*.pdb
+*.pdb
 *.exe
 **/zig-cache/
 **/target/
 *.lock
 input.txt
+*/input_*.txt
