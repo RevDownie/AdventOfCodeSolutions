@@ -26,7 +26,7 @@ pub fn main() !void {
 /// second phase runs the simulation until it stabilises - reducing the neighbour count of each removed roll
 ///
 fn simulate(data: []const u8, allocator: std.mem.Allocator) !struct { p1: u32, p2: u32 } {
-    var neighbour_counts_grid = try allocator.alloc(i32, data.len);
+    var neighbour_counts_grid = try allocator.alloc(i8, data.len);
     @memset(neighbour_counts_grid, 0);
     defer allocator.free(neighbour_counts_grid);
 
@@ -44,7 +44,7 @@ fn simulate(data: []const u8, allocator: std.mem.Allocator) !struct { p1: u32, p
         }
 
         const pos = dir{ @intCast(i % stride), @intCast(i / stride) };
-        var neighbours: i32 = 0;
+        var neighbours: i8 = 0;
         for (neighbour_dirs) |d| {
             const npos = pos + d;
             if (npos[0] >= 0 and npos[0] < stride - 1 and npos[1] >= 0 and npos[1] < stride - 1) {
@@ -92,6 +92,7 @@ fn simulate(data: []const u8, allocator: std.mem.Allocator) !struct { p1: u32, p
 
                     if (neighbour_counts_grid[ni] < 4) {
                         //Add this as a roll to remove next
+                        //TODO: Fast enough but should really avoid adding duplicates
                         try open_set.append(allocator, ni);
                     }
                 }
