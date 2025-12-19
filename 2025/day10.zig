@@ -25,6 +25,10 @@ pub fn Queue(comptime T: type) type {
             return self.count == 0;
         }
 
+        pub fn isFull(self: *Self) bool {
+            return self.count == self.buf.len;
+        }
+
         pub fn enqueue(self: *Self, item: T) !void {
             if (self.isFull()) return error.QueueFull;
 
@@ -73,12 +77,17 @@ fn run(data: []const u8, allocator: std.mem.Allocator) !struct { p1: u64, p2: u6
         const light_mask = convertLightDiagramToBitmask(space_it.next().?); //First block is the light diagram, convert it to a mask
 
         while (space_it.next()) |button| {
+            if (space_it.peek() == null) {
+                //We are at the end and this is the joltage
+                break;
+            }
+
             const button_mask = convertButtonToBitmask(button);
             try buttons.append(allocator, button_mask);
         }
 
         //Run a search looking for the combinations of buttons that when XORd create the light diagram
-        const num_presses = try searchForButtonCombination(light_mask, buttons.items[0 .. buttons.items.len - 1], allocator); //Trim off the last set which is the "Joltage"
+        const num_presses = try searchForButtonCombination(light_mask, buttons.items, allocator);
         total_1 += num_presses;
 
         buttons.clearRetainingCapacity();
